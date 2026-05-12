@@ -208,7 +208,7 @@ jobs:
       - name: 提取清单信息
         id: extract_info
         env:
-          FILE: ${{ env.FILE }}
+          FILE: ${{ github.event.inputs.FILE }}
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
@@ -323,7 +323,7 @@ jobs:
           echo "Selected CPUD: ${{ env.CPUD }}"
           echo "Selected ANDROID_VERSION: ${{ env.ANDROID_VERSION }}"
           echo "Selected BUILD_METHOD: ${{ env.BUILD_METHOD }}"
-          echo "Selected FILE: ${{ env.FILE }}"
+          echo "Selected FILE: ${{ github.event.inputs.FILE }}"
           echo "Selected KERNELSU_BRANCH: ${{ github.event.inputs.KERNELSU_BRANCH }}"
           echo "Selected SUSFS_CI: ${{ github.event.inputs.SUSFS_CI }}"
           if [ "${{ github.event.inputs.SUSFS_CI }}" != "N/A" ]; then
@@ -418,9 +418,9 @@ jobs:
       - name: 设置高速缓存环境
         if: ${{ github.event.inputs.BUILD_NOCCACHE == 'false' }}
         run: |
-          echo "CCACHE_DIR=$HOME/.ccache_${{ env.FILE }}" >> $GITHUB_ENV
-          mkdir -p "$HOME/.ccache_${{ env.FILE }}"
-          echo "set: $HOME/.ccache_${{ env.FILE }}"
+          echo "CCACHE_DIR=$HOME/.ccache_${{ github.event.inputs.FILE }}" >> $GITHUB_ENV
+          mkdir -p "$HOME/.ccache_${{ github.event.inputs.FILE }}"
+          echo "set: $HOME/.ccache_${{ github.event.inputs.FILE }}"
 
       - name: 设置Git
         run: |
@@ -446,7 +446,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ github.ref_name }}-${{ env.FILE }}-${{ env.BUILD_METHOD }}-${{ github.event.inputs.FAST_BUILD == 'true' && 'alpha' || 'beta' }}-16.2
+          key: ccache-${{ runner.os }}-${{ github.ref_name }}-${{ github.event.inputs.FILE }}-${{ env.BUILD_METHOD }}-${{ github.event.inputs.FAST_BUILD == 'true' && 'alpha' || 'beta' }}-16.2
 
       - name: 初始化Ccache
         if: ${{ github.event.inputs.BUILD_NOCCACHE == 'false' }}
@@ -475,7 +475,7 @@ jobs:
 
       - name: 初始化Repo并同步
         env:
-          FILE: ${{ env.FILE }}
+          FILE: ${{ github.event.inputs.FILE }}
         run: |
           mkdir kernel_workspace && cd kernel_workspace
           mkdir -p .repo/manifests
@@ -989,7 +989,7 @@ jobs:
 
       - name: 启用风驰内核
         env:
-          FILE: ${{ env.FILE }}
+          FILE: ${{ github.event.inputs.FILE }}
         if: ${{ env.SCHED_HMBIRD == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common

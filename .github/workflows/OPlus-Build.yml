@@ -1,4 +1,4 @@
-name: Build All OnePlus Kernels
+name: 编译任意一加内核
 on:
   workflow_dispatch:
     inputs:
@@ -61,13 +61,16 @@ on:
           - oneplus_15_aosp
           - oneplus_15t
           - oneplus_15t_aosp
-      MANAGER_SOURCE:
+      KERNELSU_BRANCH:
         type: choice
-        description: "管理器使用方向"
+        description: "KernelSU分支"
         required: true
-        default: MIUIX
+        default: KernelSU
         options:
-          - MIUIX
+          - KernelSU
+          - KernelSU-Next
+          - Sukisu-Ultra
+          - ReSukisu
       SUSFS_CI:
         type: choice
         description: "SUSFS模块下载方式"

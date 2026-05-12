@@ -669,7 +669,7 @@ jobs:
           echo "manager_artifact=$ARTIFACT" >> "$GITHUB_OUTPUT"
 
       - name: 添加KernelSU
-      if: ${{ github.event.inputs.KERNELSU_BRANCH == 'KernelSU' }}
+        if: ${{ github.event.inputs.KERNELSU_BRANCH == 'KernelSU' }}
         run: |
           cd kernel_workspace/kernel_platform
           MANAGER_BRANCH="${{ steps.manager.outputs.manager_branch }}"
@@ -681,7 +681,7 @@ jobs:
           sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Kbuild
           
       - name: 添加KernelSU Next
-      if: ${{ github.event.inputs.KERNELSU_BRANCH == 'KernelSU-Next' }}
+        if: ${{ github.event.inputs.KERNELSU_BRANCH == 'KernelSU-Next' }}
         run: |
           cd kernel_workspace/kernel_platform
           MANAGER_BRANCH="${{ steps.manager.outputs.manager_branch }}"
@@ -694,6 +694,7 @@ jobs:
           sed -i "s/KSU_VERSION_TAG_FALLBACK := v0.0.1/KSU_VERSION_TAG_FALLBACK := $KSU_GIT_TAG/g" kernel/Kbuild
 
       - name: 添加SukiSU Ultra
+        if: ${{ github.event.inputs.KERNELSU_BRANCH == 'Sukisu-Ultra' }}
         run: |
           cd kernel_workspace/kernel_platform
           MANAGER_BRANCH="${{ steps.manager.outputs.manager_branch }}"

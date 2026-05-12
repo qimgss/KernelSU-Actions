@@ -1,0 +1,348 @@
+name: Publish Artifacts to Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_workflow:
+        description: '源工作流文件名（如：build.yml）'
+        required: true
+        type: string
+      artifact_name:
+        description: '要发布的 artifact 名称（使用 * 匹配所有）'
+        required: true
+        type: string
+      release_tag:
+        description: '发布的 tag 名称（如：v1.0.0）'
+        required: true
+        type: string
+      latest_runs:
+        description: '检查最近多少次运行（默认：5）'
+        required: false
+        default: '5'
+        type: string
+      release_title:
+        description: 'Release 标题'
+        required: false
+        default: ''
+        type: string
+      release_body:
+        description: 'Release 描述'
+        required: false
+        default: ''
+        type: string
+      draft:
+        description: '是否作为草稿发布'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      prerelease:
+        description: '是否作为预发布版本'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      overwrite:
+        description: '是否覆盖已存在的 Release'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+          
+  workflow_call:
+    inputs:
+      source_workflow:
+        description: '源工作流文件名'
+        required: true
+        type: string
+      artifact_name:
+        description: '要发布的 artifact 名称'
+        required: true
+        type: string
+      release_tag:
+        description: '发布的 tag 名称'
+        required: true
+        type: string
+      latest_runs:
+        description: '检查最近多少次运行'
+        required: false
+        default: 1
+        type: number
+      release_title:
+        description: 'Release 标题'
+        required: false
+        default: ''
+        type: string
+      release_body:
+        description: 'Release 描述'
+        required: false
+        default: ''
+        type: string
+      draft:
+        description: '是否作为草稿发布'
+        required: false
+        default: false
+        type: boolean
+      prerelease:
+        description: '是否作为预发布版本'
+        required: false
+        default: false
+        type: boolean
+      overwrite:
+        description: '是否覆盖已存在的 Release'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  find-and-publish-artifact:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup GitHub CLI
+        run: |
+          # 安装 GitHub CLI
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+          
+      - name: Find successful workflow run
+        id: find_run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "正在查找工作流: ${{ inputs.source_workflow }}"
+          echo "检查最近 ${{ inputs.latest_runs }} 次运行..."
+          echo "要查找的 artifact 名称: ${{ inputs.artifact_name }}"
+          
+          # 使用 GitHub CLI 查找工作流
+          WORKFLOW_LIST=$(gh api /repos/${{ github.repository }}/actions/workflows --jq '.workflows[] | select(.path == ".github/workflows/${{ inputs.source_workflow }}") | {id, name}')
+          
+          if [ -z "$WORKFLOW_LIST" ]; then
+            echo "错误: 未找到工作流文件 .github/workflows/${{ inputs.source_workflow }}"
+            exit 1
+          fi
+          
+          WORKFLOW_ID=$(echo "$WORKFLOW_LIST" | jq -r '.id')
+          echo "找到工作流 ID: $WORKFLOW_ID"
+          
+          # 查找最近的运行
+          echo "获取最近 ${{ inputs.latest_runs }} 次成功运行..."
+          RUNS=$(gh api "/repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs?per_page=${{ inputs.latest_runs }}&status=success" --jq '.workflow_runs[].id')
+          
+          if [ -z "$RUNS" ]; then
+            echo "错误: 没有找到成功的运行"
+            exit 1
+          fi
+          
+          echo "找到的运行ID: $RUNS"
+          
+          # 遍历每个运行查找 artifact
+          for RUN_ID in $RUNS; do
+            echo "检查运行 $RUN_ID..."
+            
+            # 获取该运行的所有 artifacts
+            ARTIFACTS=$(gh api "/repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[] | {id, name}')
+            
+            if [ -n "$ARTIFACTS" ]; then
+              echo "运行 $RUN_ID 的 artifacts:"
+              echo "$ARTIFACTS" | jq -r '.name + " (ID: " + (.id|tostring) + ")"'
+              
+              # 如果 artifact_name 是 *，则下载所有 artifacts
+              if [ "${{ inputs.artifact_name }}" = "*" ]; then
+                echo "匹配所有 artifacts (模式: *)"
+                ALL_ARTIFACT_IDS=$(echo "$ARTIFACTS" | jq -r '.id' | tr '\n' ',' | sed 's/,$//')
+                ALL_ARTIFACT_NAMES=$(echo "$ARTIFACTS" | jq -r '.name' | tr '\n' ',' | sed 's/,$//')
+                
+                if [ -n "$ALL_ARTIFACT_IDS" ]; then
+                  echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+                  echo "artifact_ids=$ALL_ARTIFACT_IDS" >> $GITHUB_OUTPUT
+                  echo "artifact_names=$ALL_ARTIFACT_NAMES" >> $GITHUB_OUTPUT
+                  echo "artifact_pattern=*" >> $GITHUB_OUTPUT
+                  echo "找到 $ALL_ARTIFACT_NAMES 的 artifacts"
+                  exit 0
+                fi
+              else
+                # 检查是否有匹配的 artifact
+                ARTIFACT_ID=$(echo "$ARTIFACTS" | jq -r ". | select(.name == \"${{ inputs.artifact_name }}\") | .id")
+                
+                if [ -n "$ARTIFACT_ID" ]; then
+                  echo "找到精确匹配的 artifact '${{ inputs.artifact_name }}'，ID: $ARTIFACT_ID"
+                  echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+                  echo "artifact_ids=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+                  echo "artifact_names=${{ inputs.artifact_name }}" >> $GITHUB_OUTPUT
+                  echo "artifact_pattern=exact" >> $GITHUB_OUTPUT
+                  exit 0
+                fi
+              fi
+            else
+              echo "运行 $RUN_ID 没有 artifacts"
+            fi
+          done
+          
+          echo "错误: 在最近 ${{ inputs.latest_runs }} 次运行中未找到 artifact '${{ inputs.artifact_name }}'"
+          exit 1
+          
+      - name: Download artifact
+        id: download_artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "正在下载 artifacts..."
+          echo "运行 ID: ${{ steps.find_run.outputs.run_id }}"
+          echo "Artifact IDs: ${{ steps.find_run.outputs.artifact_ids }}"
+          echo "Artifact 名称: ${{ steps.find_run.outputs.artifact_names }}"
+          echo "匹配模式: ${{ steps.find_run.outputs.artifact_pattern }}"
+          
+          # 创建下载目录
+          mkdir -p downloaded_artifacts
+          
+          IFS=',' read -ra ARTIFACT_ID_ARRAY <<< "${{ steps.find_run.outputs.artifact_ids }}"
+          IFS=',' read -ra ARTIFACT_NAME_ARRAY <<< "${{ steps.find_run.outputs.artifact_names }}"
+          
+          for i in "${!ARTIFACT_ID_ARRAY[@]}"; do
+            ARTIFACT_ID="${ARTIFACT_ID_ARRAY[$i]}"
+            ARTIFACT_NAME="${ARTIFACT_NAME_ARRAY[$i]}"
+            
+            echo "下载 artifact: $ARTIFACT_NAME (ID: $ARTIFACT_ID)"
+            
+            # 下载 artifact
+            gh run download ${{ steps.find_run.outputs.run_id }} \
+              --name "$ARTIFACT_NAME" \
+              --dir "downloaded_artifacts/$ARTIFACT_NAME" \
+              --repo "${{ github.repository }}"
+          done
+          
+          # 列出下载的文件
+          echo "下载的文件列表:"
+          find downloaded_artifacts -type f | while read file; do
+            echo "  - $file"
+          done
+          
+          echo "artifacts_dir=downloaded_artifacts" >> $GITHUB_OUTPUT
+          
+      - name: Check if release already exists
+        id: check_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "检查 Release ${{ inputs.release_tag }} 是否存在..."
+          
+          if gh release view "${{ inputs.release_tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "release_exists=true" >> $GITHUB_OUTPUT
+            echo "Release ${{ inputs.release_tag }} 已存在"
+          else
+            echo "release_exists=false" >> $GITHUB_OUTPUT
+            echo "Release ${{ inputs.release_tag }} 不存在"
+          fi
+          
+      - name: Create or Update Release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "正在创建 Release..."
+          
+          # 获取运行信息
+          RUN_INFO=$(gh api "/repos/${{ github.repository }}/actions/runs/${{ steps.find_run.outputs.run_id }}" --jq '{run_number, head_sha, head_branch}')
+          RUN_NUMBER=$(echo "$RUN_INFO" | jq -r '.run_number')
+          COMMIT_SHA=$(echo "$RUN_INFO" | jq -r '.head_sha')
+          BRANCH=$(echo "$RUN_INFO" | jq -r '.head_branch')
+          
+          # 获取提交信息
+          COMMIT_MESSAGE=$(gh api "/repos/${{ github.repository }}/git/commits/$COMMIT_SHA" --jq '.message' | head -1)
+          
+          # 构建 Release 描述
+          RELEASE_TITLE="${{ inputs.release_title }}"
+          if [ -z "$RELEASE_TITLE" ]; then
+            RELEASE_TITLE="Release ${{ inputs.release_tag }}"
+          fi
+          
+          RELEASE_BODY="${{ inputs.release_body }}"
+          if [ -z "$RELEASE_BODY" ]; then
+            RELEASE_BODY="## 发布信息
+
+            **工作流**: ${{ inputs.source_workflow }}
+            **运行编号**: $RUN_NUMBER
+            **运行ID**: ${{ steps.find_run.outputs.run_id }}
+            **Artifacts**: ${{ steps.find_run.outputs.artifact_names }}
+            **分支**: $BRANCH
+            **提交**: [$COMMIT_SHA](https://github.com/${{ github.repository }}/commit/$COMMIT_SHA)
+            **提交信息**: $COMMIT_MESSAGE
+            **发布时间**: $(date '+%Y-%m-%d %H:%M:%S')
+            
+            ---
+            "
+          fi
+          
+          # 创建 Release
+          if [ "${{ inputs.overwrite }}" = "true" ] || [ "${{ inputs.overwrite }}" = "True" ]; then
+            OVERWRITE_FLAG="--clobber"
+          else
+            OVERWRITE_FLAG=""
+          fi
+          
+          gh release create "${{ inputs.release_tag }}" \
+            --title "$RELEASE_TITLE" \
+            --notes "$RELEASE_BODY" \
+            --draft="${{ inputs.draft }}" \
+            --prerelease="${{ inputs.prerelease }}" \
+            $OVERWRITE_FLAG \
+            --repo "${{ github.repository }}"
+            
+          echo "release_created=true" >> $GITHUB_OUTPUT
+          
+      - name: Upload artifacts to release
+        id: upload_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "上传 artifacts 到 Release..."
+          
+          # 查找所有要上传的文件
+          UPLOAD_FILES=()
+          while IFS= read -r -d '' file; do
+            UPLOAD_FILES+=("$file")
+          done < <(find "${{ steps.download_artifact.outputs.artifacts_dir }}" -type f -print0)
+          
+          if [ ${#UPLOAD_FILES[@]} -eq 0 ]; then
+            echo "警告: 没有找到要上传的文件"
+            exit 0
+          fi
+          
+          echo "将上传 ${#UPLOAD_FILES[@]} 个文件:"
+          for file in "${UPLOAD_FILES[@]}"; do
+            echo "  - $file"
+          done
+          
+          # 上传所有文件
+          for file in "${UPLOAD_FILES[@]}"; do
+            echo "上传文件: $file"
+            gh release upload "${{ inputs.release_tag }}" "$file" \
+              --repo "${{ github.repository }}" \
+              --clobber
+          done
+          
+      - name: Log release information
+        run: |
+          echo "✅ 成功发布 artifacts 到 Release!"
+          echo "📦 Artifacts: ${{ steps.find_run.outputs.artifact_names }}"
+          echo "🔢 Artifact IDs: ${{ steps.find_run.outputs.artifact_ids }}"
+          echo "🏷️  Tag: ${{ inputs.release_tag }}"
+          echo "🔗 发布地址: https://github.com/${{ github.repository }}/releases/tag/${{ inputs.release_tag }}"
+          echo "🔄 源工作流: ${{ inputs.source_workflow }}"
+          echo "⚙️ 源运行ID: ${{ steps.find_run.outputs.run_id }}"
+          echo "📁 下载目录: ${{ steps.download_artifact.outputs.artifacts_dir }}"

@@ -1,0 +1,463 @@
+name: 统一内核矩阵构建
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernelsu_variant:
+        description: "KernelSU 变体"
+        required: true
+        type: choice
+        options:
+          - Official
+          - SukiSU
+          - ReSukiSU
+        default: Official
+      kernelsu_branch:
+        description: "KSU 分支"
+        required: true
+        type: choice
+        options:
+          - Stable(标准)
+          - Dev(开发)
+        default: Stable(标准)
+      version:
+        description: "自定义版本名 (可选)"
+        required: false
+        type: string
+        default: "build-qimgss"
+      build_time:
+        description: "自定义构建时间 (可选，N或留空=当前UTC)"
+        required: false
+        type: string
+        default: "N"
+      use_zram:
+        description: "启用 ZRAM 增强算法"
+        required: true
+        type: boolean
+        default: false
+      use_bbg:
+        description: "启用 BBG 防格机"
+        required: true
+        type: boolean
+        default: false
+      use_kpm:
+        description: "启用 KPM 功能"
+        required: true
+        type: boolean
+        default: false
+      use_rekernel:
+        description: "启用 Re-Kernel 驱动"
+        required: false
+        type: boolean
+        default: false
+      cancel_susfs:
+        description: "禁用 SUSFS"
+        required: true
+        type: boolean
+        default: false
+      supp_op:
+        description: "启用一加 8E 支持 (仅 Android 15/16)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  # 矩阵1: Android 12 (5.10)
+  build-a12-5-10:
+    name: "Android 12 (5.10.${{ matrix.sub_level }}-${{ matrix.os_patch_level }})"
+    uses: ./.github/workflows/build.yml
+    with:
+      android_version: "android12"
+      kernel_version: "5.10"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      revision: ${{ matrix.revision }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: false
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "66"
+            os_patch_level: "2022-01"
+            revision: "r11"
+          - sub_level: "81"
+            os_patch_level: "2022-03"
+            revision: "r11"
+          - sub_level: "101"
+            os_patch_level: "2022-04"
+            revision: "r28"
+          - sub_level: "110"
+            os_patch_level: "2022-07"
+            revision: "r1"
+          - sub_level: "117"
+            os_patch_level: "2022-09"
+            revision: "r1"
+          - sub_level: "136"
+            os_patch_level: "2022-11"
+            revision: "r15"
+          - sub_level: "149"
+            os_patch_level: "2023-01"
+            revision: "r1"
+          - sub_level: "160"
+            os_patch_level: "2023-03"
+            revision: "r1"
+          - sub_level: "168"
+            os_patch_level: "2023-04"
+            revision: "r9"
+          - sub_level: "177"
+            os_patch_level: "2023-07"
+            revision: "r3"
+          - sub_level: "185"
+            os_patch_level: "2023-09"
+            revision: "r1"
+          - sub_level: "198"
+            os_patch_level: "2024-01"
+            revision: "r17"
+          - sub_level: "205"
+            os_patch_level: "2024-03"
+            revision: "r1"
+          - sub_level: "209"
+            os_patch_level: "2024-05"
+            revision: "r13"
+          - sub_level: "218"
+            os_patch_level: "2024-08"
+            revision: "r14"
+          - sub_level: "226"
+            os_patch_level: "2024-11"
+            revision: "r8"
+          - sub_level: "233"
+            os_patch_level: "2025-02"
+            revision: "r1"
+          - sub_level: "236"
+            os_patch_level: "2025-05"
+            revision: "r1"
+          - sub_level: "237"
+            os_patch_level: "2025-06"
+            revision: "r1"
+          - sub_level: "240"
+            os_patch_level: "2025-09"
+            revision: "r1"
+          - sub_level: "246"
+            os_patch_level: "2025-12"
+            revision: "r1"
+          - sub_level: "X"
+            os_patch_level: "lts"
+            revision: "r1"
+
+  # 矩阵2: Android 13 (5.15)
+  build-a13-5-15:
+    name: "Android 13 (5.15.${{ matrix.sub_level }}-${{ matrix.os_patch_level }})"
+    uses: ./.github/workflows/build.yml
+    with:
+      android_version: "android13"
+      kernel_version: "5.15"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: false
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "74"
+            os_patch_level: "2023-01"
+          - sub_level: "78"
+            os_patch_level: "2023-03"
+          - sub_level: "94"
+            os_patch_level: "2023-05"
+          - sub_level: "104"
+            os_patch_level: "2023-07"
+          - sub_level: "119"
+            os_patch_level: "2023-09"
+          - sub_level: "123"
+            os_patch_level: "2023-11"
+          - sub_level: "137"
+            os_patch_level: "2024-01"
+          - sub_level: "144"
+            os_patch_level: "2024-03"
+          - sub_level: "148"
+            os_patch_level: "2024-05"
+          - sub_level: "149"
+            os_patch_level: "2024-07"
+          - sub_level: "151"
+            os_patch_level: "2024-08"
+          - sub_level: "153"
+            os_patch_level: "2024-09"
+          - sub_level: "167"
+            os_patch_level: "2024-11"
+          - sub_level: "170"
+            os_patch_level: "2025-01"
+          - sub_level: "178"
+            os_patch_level: "2025-03"
+          - sub_level: "180"
+            os_patch_level: "2025-05"
+          - sub_level: "185"
+            os_patch_level: "2025-07"
+          - sub_level: "189"
+            os_patch_level: "2025-09"
+          - sub_level: "194"
+            os_patch_level: "2025-12"
+          - sub_level: "X"
+            os_patch_level: "lts"
+
+  # 矩阵3: Android 14 (6.1)
+  build-a14-6-1:
+    name: "Android 14 (6.1.${{ matrix.sub_level }}-${{ matrix.os_patch_level }})"
+    uses: ./.github/workflows/build.yml
+    with:
+      android_version: "android14"
+      kernel_version: "6.1"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: false
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "25"
+            os_patch_level: "2023-10"
+          - sub_level: "43"
+            os_patch_level: "2023-11"
+          - sub_level: "57"
+            os_patch_level: "2024-01"
+          - sub_level: "68"
+            os_patch_level: "2024-03"
+          - sub_level: "75"
+            os_patch_level: "2024-05"
+          - sub_level: "78"
+            os_patch_level: "2024-06"
+          - sub_level: "84"
+            os_patch_level: "2024-07"
+          - sub_level: "90"
+            os_patch_level: "2024-08"
+          - sub_level: "93"
+            os_patch_level: "2024-09"
+          - sub_level: "99"
+            os_patch_level: "2024-10"
+          - sub_level: "112"
+            os_patch_level: "2024-11"
+          - sub_level: "115"
+            os_patch_level: "2024-12"
+          - sub_level: "118"
+            os_patch_level: "2025-01"
+          - sub_level: "124"
+            os_patch_level: "2025-02"
+          - sub_level: "128"
+            os_patch_level: "2025-03"
+          - sub_level: "129"
+            os_patch_level: "2025-04"
+          - sub_level: "134"
+            os_patch_level: "2025-05"
+          - sub_level: "138"
+            os_patch_level: "2025-06"
+          - sub_level: "141"
+            os_patch_level: "2025-07"
+          - sub_level: "145"
+            os_patch_level: "2025-09"
+          - sub_level: "157"
+            os_patch_level: "2025-12"
+          - sub_level: "X"
+            os_patch_level: "lts"
+
+  # 矩阵4: Android 15 (6.6)
+  build-a15-6-6:
+    name: "Android 15 (6.6.${{ matrix.sub_level }}-${{ matrix.os_patch_level }})"
+    uses: ./.github/workflows/build.yml
+    with:
+      android_version: "android15"
+      kernel_version: "6.6"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: ${{ inputs.supp_op || false }}
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "50"
+            os_patch_level: "2024-10"
+          - sub_level: "56"
+            os_patch_level: "2024-11"
+          - sub_level: "57"
+            os_patch_level: "2024-12"
+          - sub_level: "58"
+            os_patch_level: "2025-01"
+          - sub_level: "66"
+            os_patch_level: "2025-02"
+          - sub_level: "77"
+            os_patch_level: "2025-03"
+          - sub_level: "82"
+            os_patch_level: "2025-04"
+          - sub_level: "87"
+            os_patch_level: "2025-05"
+          - sub_level: "89"
+            os_patch_level: "2025-06"
+          - sub_level: "92"
+            os_patch_level: "2025-07"
+          - sub_level: "98"
+            os_patch_level: "2025-09"
+          - sub_level: "102"
+            os_patch_level: "2025-10"
+          - sub_level: "118"
+            os_patch_level: "2026-01"
+          - sub_level: "X"
+            os_patch_level: "lts"
+
+  # 矩阵5: Android 16 (6.12)
+  build-a16-6-12:
+    name: "Android 16 (6.12.${{ matrix.sub_level }}-${{ matrix.os_patch_level }})"
+    uses: ./.github/workflows/build.yml
+    with:
+      android_version: "android16"
+      kernel_version: "6.12"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: false
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: ${{ inputs.supp_op || false }}
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "23"
+            os_patch_level: "2025-06"
+          - sub_level: "30"
+            os_patch_level: "2025-07"
+          - sub_level: "38"
+            os_patch_level: "2025-09"
+          - sub_level: "58"
+            os_patch_level: "2025-12"
+
+  # 等待所有矩阵构建完成
+  wait-for-builds:
+    name: 等待所有内核构建完成
+    runs-on: ubuntu-latest
+    needs: 
+      - build-a12-5-10
+      - build-a13-5-15
+      - build-a14-6-1
+      - build-a15-6-6
+      - build-a16-6-12
+    outputs:
+      all_jobs: ${{ toJSON(needs) }}
+    steps:
+      - name: 汇总构建状态
+        run: |
+          echo "所有内核构建任务已完成！"
+          echo "构建状态汇总："
+          echo "- Android 12 (5.10): ${{ needs.build-a12-5-10.result }}"
+          echo "- Android 13 (5.15): ${{ needs.build-a13-5-15.result }}"
+          echo "- Android 14 (6.1): ${{ needs.build-a14-6-1.result }}"
+          echo "- Android 15 (6.6): ${{ needs.build-a15-6-6.result }}"
+          echo "- Android 16 (6.12): ${{ needs.build-a16-6-12.result }}"
+
+  # 下载并汇总所有构建产物
+  collect-artifacts:
+    name: 收集并汇总构建产物
+    runs-on: ubuntu-latest
+    needs: [wait-for-builds]
+    steps:
+      - name: 下载所有 artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: artifacts
+          
+      - name: 汇总构建产物
+        run: |
+          echo "构建产物汇总："
+          find artifacts -type f -name "*.zip" | while read file; do
+            echo "  - $(basename "$file")"
+          done
+          find artifacts -type f -name "*.img" | while read file; do
+            echo "  - $(basename "$file")"
+          done
+          
+          # 统计数量
+          ZIP_COUNT=$(find artifacts -type f -name "*.zip" | wc -l)
+          IMG_COUNT=$(find artifacts -type f -name "*.img" | wc -l)
+          echo "总计: $ZIP_COUNT 个 AnyKernel3 压缩包, $IMG_COUNT 个 boot 镜像"
+
+      - name: 上传到 releases
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "build-${{ github.run_id }}-${{ github.run_number }}"
+          name: "[GKI]内核构建 ${{ github.run_number }} - ${{ github.run_started_at }}"
+          body: |
+            # 内核构建产物
+            
+            ## 构建配置
+            - **KernelSU 变体**: ${{ inputs.kernelsu_variant }}
+            - **KSU 分支**: ${{ inputs.kernelsu_branch }}
+            - **构建时间**: ${{ inputs.build_time }}
+            - **ZRAM 增强**: ${{ inputs.use_zram }}
+            - **BBG 防格机**: ${{ inputs.use_bbg }}
+            - **KPM 功能**: ${{ inputs.use_kpm }}
+            - **Re-Kernel**: ${{ inputs.use_rekernel }}
+            - **SUSFS**: ${{ !inputs.cancel_susfs }}
+            - **一加 8E 支持**: ${{ inputs.supp_op }}
+            
+            ## 包含的内核版本
+            1. **Android 12 (5.10)**: 多个补丁级别
+            2. **Android 13 (5.15)**: 多个补丁级别
+            3. **Android 14 (6.1)**: 多个补丁级别
+            4. **Android 15 (6.6)**: 多个补丁级别
+            5. **Android 16 (6.12)**: 多个补丁级别
+            
+            请根据您的设备选择合适的文件刷入。
+            
+            > 构建时间: ${{ github.run_started_at }}
+            > 工作流运行: ${{ github.run_id }}-${{ github.run_number }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*.zip
+          fail_on_unmatched_files: false

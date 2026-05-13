@@ -118,8 +118,8 @@ on:
       SUFFIX:
         type: string
         description: "自定义内核后缀(不输入使用RAND_STR或-1关闭)"
-        required: false
-        default: ""
+        required: true
+        default: "build-qimgss"
       SUBLEVEL:
         description: "自定义内核等级欺骗(SUBLEVEL)"
         required: false

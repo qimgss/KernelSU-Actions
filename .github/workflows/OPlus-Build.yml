@@ -1343,6 +1343,12 @@ jobs:
             fi
           fi
           if [ -z "$image_path" ]; then
+            image_path=$(find "./kernel_workspace" -type f -name "Image" 2>/dev/null | head -n 1)
+            if [ -n "$image_path" ]; then
+              echo "✅ 通过全局搜索，成功找到 Image 文件: $image_path"
+            fi
+          fi
+          if [ -z "$image_path" ]; then
             echo "❌ 未找到 Image 文件，构建失败" >&2
             exit 1
           fi
@@ -1430,13 +1436,6 @@ jobs:
         id: suffix
         run: |
           echo "value=${{ env.ZRAM_ALGO_U && format('_{0}', env.ZRAM_ALGO_U) || '' }}${{ github.event.inputs.KPM == 'KPM' && '_KPM' || github.event.inputs.KPM == 'KPN' && '_KPN' || '' }}${{ github.event.inputs.LSM_BBG == 'true' && '_BBG' || '' }}_ILH${{ env.SCHED_HMBIRD== 'true' && '_HMBIRD' || '' }}${{ github.event.inputs.DROID_SPACES== 'true' && '_DS' || '' }}${{ github.event.inputs.RE_KERNEL == 'true' && '_REKER' || '' }}" >> $GITHUB_OUTPUT
-      
-      - name: 压缩 AnyKernel3
-        id: compress
-        run: |
-          AK3_ZIP_NAME="AnyKernel3_KernelSU_${{ env.KSUVER }}_${{ steps.extract_info.outputs.value }}(${{ env.TKERNEL_VERSION }})${{ steps.suffix.outputs.value }}.zip"
-          echo "ak3name=$AK3_ZIP_NAME" >> $GITHUB_OUTPUT
-          zip -r "$AK3_ZIP_NAME" ./AnyKernel3
 
       - name: 上传 AnyKernel3
         uses: actions/upload-artifact@v7

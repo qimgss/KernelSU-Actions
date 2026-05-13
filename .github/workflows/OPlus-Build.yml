@@ -425,7 +425,7 @@ jobs:
       - name: 设置Git
         run: |
           git config --global user.name "qimgss"
-          git config --global user.email "qimgss.126.com
+          git config --global user.email "qimgss.126.com"
       - name: 分叉检测
         run: |
           repo="${{ github.repository }}"; json=$(curl -s "https://api.github.com/repos/$repo")

@@ -35,7 +35,7 @@ on:
         type: string
         description: "动态清单仓库所有者"
         required: true
-        default: "Numbersf"
+        default: "OnePlusOSS"
       BUILD_TIME:
         type: string
         description: "自定义构建时间(输入F使用当前UTC时间)"
@@ -394,14 +394,13 @@ jobs:
 
       - name: 设置Git
         run: |
-          git config --global user.name "Numbersf"
-          git config --global user.email "263623064@qq.com"
-
+          git config --global user.name "qimgss"
+          git config --global user.email "qimgss@126.com
       - name: 分叉检测
         run: |
           repo="${{ github.repository }}"; json=$(curl -s "https://api.github.com/repos/$repo")
           parent=$(echo "$json" | grep -o '"full_name": *"[^"]*"' | head -n 2 | tail -n 1 | sed 's/.*"full_name": *"\([^"]*\)".*/\1/')
-          if [ -n "$parent" ] && [ "$parent" != "Numbersf/Action-Build" ]; then
+          if [ -n "$parent" ] && [ "$parent" != "qimgss/KernelSU-Actions" ]; then
             echo "::warning title=Source Warning::您使用的内核编译地址为非官方源，可能导致运行失败或内核异常。"
           fi
 
@@ -798,7 +797,7 @@ jobs:
             git clone https://github.com/Sakion-Team/Re-Kernel.git
           fi
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
-          git clone https://github.com/Numbersf/Action-Build.git
+          git clone https://github.com/qimgss/KernelSU-Actions.git
           cd kernel_platform
           if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
             echo "正在拉取susfs补丁"

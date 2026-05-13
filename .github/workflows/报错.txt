@@ -1,0 +1,55 @@
+Run KERNELSU_BRANCH="KernelSU"
+  KERNELSU_BRANCH="KernelSU"
+  
+  case "$KERNELSU_BRANCH" in
+    KernelSU|*)
+      BRANCH="main"
+      ARTIFACT="manager"
+      ;;
+    KernelSU-Next)
+      BRANCH="old"
+      ARTIFACT="manager"
+      ;;
+    Sukisu-Ultra)
+      BRANCH="main"
+      ARTIFACT=manager"
+      ;;
+    ReSukisu)
+      BRANCH="main"
+      ARTIFACT="manager"
+      ;;
+  esac
+  
+  echo "manager_branch=$BRANCH" >> "$GITHUB_OUTPUT"
+  echo "manager_artifact=$ARTIFACT" >> "$GITHUB_OUTPUT"
+  shell: /usr/bin/bash -e {0}
+  env:
+    CCACHE_COMPILERCHECK: none
+    CCACHE_NOHASHDIR: true
+    CCACHE_NOHARDLINK: true
+    CCACHE_IS_KERNEL_COMPILING: true
+    CCACHE_MAXSIZE: 5G
+    FILE_CONF: oneplus_11
+    FILE_BASE: OnePlus11
+    MANIFEST_REPO: OnePlusOSS
+    MANIFEST_REPO_NAME: kernel_manifest
+    MANIFEST_BRANCH: oneplus/sm8550
+    CPU: sm8550
+    ANDROID_VERSION: 16.0.0
+    ANDROID_SHORT_VERSION: 16
+    CPUD: kalama
+    BUILD_METHOD: gki
+    CCACHE_DIR: /home/runner/.ccache_oneplus_11_b
+    CACHE_KEY: 38dab1c55ecc6d656989e7b6dec2f586
+    KERNEL_REPOS: msm-kernel
+    KANDROID_VERSION: android13
+    KERNEL_VERSION: 5.15
+    TKERNEL_VERSION: 5.15.180
+    KV1: 5
+    KV2: 515
+    KV3: 515180
+    KERNEL_SHORT_VERSION: 5.15
+    KERNEL_SHORT_PATCH_VERSION: 5_15
+    ENABLE_RUST: false
+/home/runner/work/_temp/e775ec7e-0782-4f2f-a534-8db99a993b9f.sh: line 23: unexpected EOF while looking for matching `"'
+Error: Process completed with exit code 2.

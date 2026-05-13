@@ -641,7 +641,7 @@ jobs:
           git add -A
           git commit -m "Random suffix & remove -dirty"
 
-      - name: 解析KERNELSU分支来源
+      - name: 解析KernelSU分支来源
         id: manager
         run: |
           KERNELSU_BRANCH="${{ github.event.inputs.KERNELSU_BRANCH }}"
@@ -657,7 +657,7 @@ jobs:
               ;;
             Sukisu-Ultra)
               BRANCH="main"
-              ARTIFACT="anager"
+              ARTIFACT="manager"
               ;;
             ReSukisu)
               BRANCH="main"

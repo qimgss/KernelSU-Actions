@@ -8,22 +8,14 @@ on:
   workflow_dispatch:
     inputs:
       kernelsu_variant:
-        description: "KernelSU 变体"
+        description: "KernelSU 分支"
         required: true
         type: choice
+        default: KernelSU
         options:
-          - Official
-          - SukiSU
+          - KernelSU
+          - SukiSU-Ultra
           - ReSukiSU
-        default: Official
-      kernelsu_branch:
-        description: "KSU 分支"
-        required: true
-        type: choice
-        options:
-          - Stable(标准)
-          - Dev(开发)
-        default: Stable(标准)
       version:
         description: "自定义版本名 (可选)"
         required: false
@@ -77,7 +69,6 @@ jobs:
       os_patch_level: ${{ matrix.os_patch_level }}
       revision: ${{ matrix.revision }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -167,7 +158,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -231,7 +221,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -299,7 +288,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -351,7 +339,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: false
@@ -436,7 +423,6 @@ jobs:
             
             ## 构建配置
             - **KernelSU 变体**: ${{ inputs.kernelsu_variant }}
-            - **KSU 分支**: ${{ inputs.kernelsu_branch }}
             - **构建时间**: ${{ inputs.build_time }}
             - **ZRAM 增强**: ${{ inputs.use_zram }}
             - **BBG 防格机**: ${{ inputs.use_bbg }}

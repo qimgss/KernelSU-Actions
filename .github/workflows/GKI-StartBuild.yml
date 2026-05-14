@@ -27,15 +27,6 @@ on:
           #- Next
           - SukiSU-Ultra
           - ReSukiSU
-      kernelsu_branch:
-        description: "KSU 分支"
-        required: true
-        type: choice
-        options:
-          - Stable(标准)
-          - Dev(开发)
-          - Other(其他/指定)
-        default: Stable(标准)
       version:
         description: "自定义版本名 (可选)"
         required: false
@@ -74,9 +65,6 @@ on:
   workflow_call:
     inputs:
       kernelsu_variant:
-        required: true
-        type: string
-      kernelsu_branch:
         required: true
         type: string
       version:
@@ -183,7 +171,7 @@ jobs:
           - sub_level: "X"
             os_patch_level: "lts"
             revision: "r1"
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/GKI-Build.yml
     secrets: inherit
     with:
       android_version: "android12"
@@ -192,7 +180,6 @@ jobs:
       os_patch_level: ${{ matrix.os_patch_level }}
       revision: ${{ matrix.revision }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -250,7 +237,7 @@ jobs:
             os_patch_level: "2025-12"
           - sub_level: "X"
             os_patch_level: "lts"
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/GKI-Build.yml
     secrets: inherit
     with:
       android_version: "android13"
@@ -258,7 +245,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -320,7 +306,7 @@ jobs:
             os_patch_level: "2025-12"
           - sub_level: "X"
             os_patch_level: "lts"
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/GKI-Build.yml
     secrets: inherit
     with:
       android_version: "android14"
@@ -328,7 +314,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -374,7 +359,7 @@ jobs:
             os_patch_level: "2026-01"
           - sub_level: "X"
             os_patch_level: "lts"
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/GKI-Build.yml
     secrets: inherit
     with:
       android_version: "android15"
@@ -382,7 +367,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
@@ -410,7 +394,7 @@ jobs:
             os_patch_level: "2025-12"
           # - sub_level: "X"
           #   os_patch_level: "lts"
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/GKI-Build.yml
     secrets: inherit
     with:
       android_version: "android16"
@@ -418,7 +402,6 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       ksu_variant: ${{ inputs.kernelsu_variant }}
-      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
       build_time: ${{ inputs.build_time || '' }}
       use_zram: false

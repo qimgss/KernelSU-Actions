@@ -431,12 +431,12 @@ jobs:
 
   # 仅在直接触发时运行，从 main.yml 调用时跳过
   get-ksu-manager:
-    needs: |
-    build-kernels-a12-5-10
-    build-kernels-a13-5-15
-    build-kernels-a14-6-1
-    build-kernels-a15-6-6
-    build-kernels-a16-6-12
+    needs: 
+      - build-kernels-a12-5-10
+      - build-kernels-a13-5-15
+      - build-kernels-a14-6-1
+      - build-kernels-a15-6-6
+      - build-kernels-a16-6-12
     if: ${{ !inputs.called_from_main }}
     uses: ./.github/workflows/get-manager.yml
     secrets: inherit

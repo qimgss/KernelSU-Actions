@@ -1315,7 +1315,7 @@ jobs:
           ccache -s
 
       - name: 使用官方脚本构建内核
-      if: ${{ github.event.inputs.BUILD_KERNEL == 'Official' }}
+        if: ${{ github.event.inputs.BUILD_KERNEL == 'Official' }}
         run: |
           cd kernel_workspace
           if [ -f ./kernel_platform/build_with_bazel.py ]; then

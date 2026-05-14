@@ -1,0 +1,469 @@
+name: 构建任意GKI内核
+
+permissions:
+  contents: write
+  actions: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_kernel_type:
+        description: "编译内核类型"
+        required: true
+        type: choice
+        options:
+          - Android12-5.10
+          - Android13-5.15
+          - Android14-6.1
+          - Android15-6.6
+          - Android16-6.12
+      kernelsu_variant:
+        description: "KernelSU 变体"
+        required: true
+        type: choice
+        options:
+          - Official
+          #- Next
+          - SukiSU
+          - ReSukiSU
+        default: Official
+      kernelsu_branch:
+        description: "KSU 分支"
+        required: true
+        type: choice
+        options:
+          - Stable(标准)
+          - Dev(开发)
+          - Other(其他/指定)
+        default: Stable(标准)
+      version:
+        description: "自定义版本名 (可选)"
+        required: false
+        type: string
+        default: "build-qimgss"
+      build_time:
+        description: "自定义构建时间 (可选，N或留空=当前UTC)"
+        required: false
+        type: string
+        default: "N"
+      use_zram:
+        description: "启用 ZRAM 增强算法"
+        required: true
+        type: boolean
+        default: false
+      use_bbg:
+        description: "启用 BBG 防格机"
+        required: true
+        type: boolean
+        default: false
+      use_kpm:
+        description: "启用 KPM 功能"
+        required: true
+        type: boolean
+        default: false
+      use_rekernel:
+        description: "启用 Re-Kernel 驱动"
+        required: false
+        type: boolean
+        default: false
+      cancel_susfs:
+        description: "禁用 SUSFS"
+        required: true
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      kernelsu_variant:
+        required: true
+        type: string
+      kernelsu_branch:
+        required: true
+        type: string
+      version:
+        required: false
+        type: string
+      build_time:
+        required: false
+        type: string
+        default: "Sun Dec 01 08:10:00 UTC 2024"
+      use_zram:
+        required: true
+        type: boolean
+      use_bbg:
+        required: true
+        type: boolean
+      use_kpm:
+        required: true
+        type: boolean
+      use_rekernel:
+        required: false
+        type: boolean
+        default: false
+      cancel_susfs:
+        required: false
+        type: boolean
+      called_from_main:
+        description: "是否从 main.yml 调用（内部使用）"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-kernels-a12-5-10:
+    if: ${{ github.event.inputs.build_kernel_type == 'Android12-5.10' }}
+
+    name: "5.10.${{ matrix.sub_level }}-${{ matrix.os_patch_level }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "66"
+            os_patch_level: "2022-01"
+            revision: "r11"
+          - sub_level: "81"
+            os_patch_level: "2022-03"
+            revision: "r11"
+          - sub_level: "101"
+            os_patch_level: "2022-04"
+            revision: "r28"
+          - sub_level: "110"
+            os_patch_level: "2022-07"
+            revision: "r1"
+          - sub_level: "117"
+            os_patch_level: "2022-09"
+            revision: "r1"
+          - sub_level: "136"
+            os_patch_level: "2022-11"
+            revision: "r15"
+          - sub_level: "149"
+            os_patch_level: "2023-01"
+            revision: "r1"
+          - sub_level: "160"
+            os_patch_level: "2023-03"
+            revision: "r1"
+          - sub_level: "168"
+            os_patch_level: "2023-04"
+            revision: "r9"
+          - sub_level: "177"
+            os_patch_level: "2023-07"
+            revision: "r3"
+          - sub_level: "185"
+            os_patch_level: "2023-09"
+            revision: "r1"
+          - sub_level: "198"
+            os_patch_level: "2024-01"
+            revision: "r17"
+          - sub_level: "205"
+            os_patch_level: "2024-03"
+            revision: "r1"
+          - sub_level: "209"
+            os_patch_level: "2024-05"
+            revision: "r13"
+          - sub_level: "218"
+            os_patch_level: "2024-08"
+            revision: "r14"
+          - sub_level: "226"
+            os_patch_level: "2024-11"
+            revision: "r8"
+          - sub_level: "233"
+            os_patch_level: "2025-02"
+            revision: "r1"
+          - sub_level: "236"
+            os_patch_level: "2025-05"
+            revision: "r1"
+          - sub_level: "237"
+            os_patch_level: "2025-06"
+            revision: "r1"
+          - sub_level: "240"
+            os_patch_level: "2025-09"
+            revision: "r1"
+          - sub_level: "246"
+            os_patch_level: "2025-12"
+            revision: "r1"
+          - sub_level: "X"
+            os_patch_level: "lts"
+            revision: "r1"
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      android_version: "android12"
+      kernel_version: "5.10"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      revision: ${{ matrix.revision }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: false
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+
+  # 仅在直接触发时运行，从 main.yml 调用时跳过
+  get-ksu-manager:
+    if: ${{ !inputs.called_from_main }}
+    uses: ./.github/workflows/get-manager.yml
+    secrets: inherit
+    with:
+      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+
+  build-kernels-a13-5-15:
+    if: ${{ github.event.inputs.build_kernel_type == 'Android13-5.15' }}
+
+    name: "5.15.${{ matrix.sub_level }}-${{ matrix.os_patch_level }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "74"
+            os_patch_level: "2023-01"
+          - sub_level: "78"
+            os_patch_level: "2023-03"
+          - sub_level: "94"
+            os_patch_level: "2023-05"
+          - sub_level: "104"
+            os_patch_level: "2023-07"
+          - sub_level: "119"
+            os_patch_level: "2023-09"
+          - sub_level: "123"
+            os_patch_level: "2023-11"
+          - sub_level: "137"
+            os_patch_level: "2024-01"
+          - sub_level: "144"
+            os_patch_level: "2024-03"
+          - sub_level: "148"
+            os_patch_level: "2024-05"
+          - sub_level: "149"
+            os_patch_level: "2024-07"
+          - sub_level: "151"
+            os_patch_level: "2024-08"
+          - sub_level: "153"
+            os_patch_level: "2024-09"
+          - sub_level: "167"
+            os_patch_level: "2024-11"
+          - sub_level: "170"
+            os_patch_level: "2025-01"
+          - sub_level: "178"
+            os_patch_level: "2025-03"
+          - sub_level: "180"
+            os_patch_level: "2025-05"
+          - sub_level: "185"
+            os_patch_level: "2025-07"
+          - sub_level: "189"
+            os_patch_level: "2025-09"
+          - sub_level: "194"
+            os_patch_level: "2025-12"
+          - sub_level: "X"
+            os_patch_level: "lts"
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      android_version: "android13"
+      kernel_version: "5.15"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: false
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+
+  # 仅在直接触发时运行，从 main.yml 调用时跳过
+  get-ksu-manager:
+    if: ${{ !inputs.called_from_main }}
+    uses: ./.github/workflows/get-manager.yml
+    secrets: inherit
+    with:
+      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+
+  build-kernels-a14-6-1:
+    if: ${{ github.event.inputs.build_kernel_type == 'Android14-6.1' }}
+
+    name: "6.1.${{ matrix.sub_level }}-${{ matrix.os_patch_level }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "25"
+            os_patch_level: "2023-10"
+          - sub_level: "43"
+            os_patch_level: "2023-11"
+          - sub_level: "57"
+            os_patch_level: "2024-01"
+          - sub_level: "68"
+            os_patch_level: "2024-03"
+          - sub_level: "75"
+            os_patch_level: "2024-05"
+          - sub_level: "78"
+            os_patch_level: "2024-06"
+          - sub_level: "84"
+            os_patch_level: "2024-07"
+          - sub_level: "90"
+            os_patch_level: "2024-08"
+          - sub_level: "93"
+            os_patch_level: "2024-09"
+          - sub_level: "99"
+            os_patch_level: "2024-10"
+          - sub_level: "112"
+            os_patch_level: "2024-11"
+          - sub_level: "115"
+            os_patch_level: "2024-12"
+          - sub_level: "118"
+            os_patch_level: "2025-01"
+          - sub_level: "124"
+            os_patch_level: "2025-02"
+          - sub_level: "128"
+            os_patch_level: "2025-03"
+          - sub_level: "129"
+            os_patch_level: "2025-04"
+          - sub_level: "134"
+            os_patch_level: "2025-05"
+          - sub_level: "138"
+            os_patch_level: "2025-06"
+          - sub_level: "141"
+            os_patch_level: "2025-07"
+          - sub_level: "145"
+            os_patch_level: "2025-09"
+          - sub_level: "157"
+            os_patch_level: "2025-12"
+          - sub_level: "X"
+            os_patch_level: "lts"
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      android_version: "android14"
+      kernel_version: "6.1"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: false
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+
+  # 仅在直接触发时运行，从 main.yml 调用时跳过
+  get-ksu-manager:
+    if: ${{ !inputs.called_from_main }}
+    uses: ./.github/workflows/get-manager.yml
+    secrets: inherit
+    with:
+      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+
+  build-kernels-a15-6-6:
+    if: ${{ github.event.inputs.build_kernel_type == 'Android15-6.6' }}
+
+    name: "6.6.${{ matrix.sub_level }}-${{ matrix.os_patch_level }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "50"
+            os_patch_level: "2024-10"
+          - sub_level: "56"
+            os_patch_level: "2024-11"
+          - sub_level: "57"
+            os_patch_level: "2024-12"
+          - sub_level: "58"
+            os_patch_level: "2025-01"
+          - sub_level: "66"
+            os_patch_level: "2025-02"
+          - sub_level: "77"
+            os_patch_level: "2025-03"
+          - sub_level: "82"
+            os_patch_level: "2025-04"
+          - sub_level: "87"
+            os_patch_level: "2025-05"
+          - sub_level: "89"
+            os_patch_level: "2025-06"
+          - sub_level: "92"
+            os_patch_level: "2025-07"
+          - sub_level: "98"
+            os_patch_level: "2025-09"
+          - sub_level: "102"
+            os_patch_level: "2025-10"
+          - sub_level: "118"
+            os_patch_level: "2026-01"
+          - sub_level: "X"
+            os_patch_level: "lts"
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      android_version: "android15"
+      kernel_version: "6.6"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: ${{ inputs.use_zram }}
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: ${{ inputs.supp_op || false }}
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+
+  # 仅在直接触发时运行，从 main.yml 调用时跳过
+  get-ksu-manager:
+    if: ${{ !inputs.called_from_main }}
+    uses: ./.github/workflows/get-manager.yml
+    secrets: inherit
+    with:
+      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+
+  build-kernels-a16-6-12:
+    if: ${{ github.event.inputs.build_kernel_type == 'Android16-6.12' }}
+
+    name: "6.12.${{ matrix.sub_level }}-${{ matrix.os_patch_level }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "23"
+            os_patch_level: "2025-06"
+          - sub_level: "30"
+            os_patch_level: "2025-07"
+          - sub_level: "38"
+            os_patch_level: "2025-09"
+          - sub_level: "58"
+            os_patch_level: "2025-12"
+          # - sub_level: "X"
+          #   os_patch_level: "lts"
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      android_version: "android16"
+      kernel_version: "6.12"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
+      version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
+      use_zram: false
+      use_bbg: ${{ inputs.use_bbg }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_rekernel: ${{ inputs.use_rekernel || false }}
+      supp_op: ${{ inputs.supp_op || false }}
+      enable_susfs: ${{ !inputs.cancel_susfs }}
+
+  # 仅在直接触发时运行，从 main.yml 调用时跳过
+  get-ksu-manager:
+    if: ${{ !inputs.called_from_main }}
+    uses: ./.github/workflows/get-manager.yml
+    secrets: inherit
+    with:
+      kernelsu_variant: ${{ inputs.kernelsu_variant }}

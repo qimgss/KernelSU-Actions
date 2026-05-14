@@ -362,7 +362,7 @@ jobs:
                 case "$variant_input" in
                   "Next") ;;
                   "SukiSU") BRANCH="-s builtin" ;;
-                  "Official") BRANCH="-s main" ;;
+                  "KernelSU") BRANCH="-s main" ;;
                   *) BRANCH="-" ;;
                 esac
                 ;;

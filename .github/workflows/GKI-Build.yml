@@ -20,16 +20,9 @@ on:
       os_patch_level:
         required: true
         type: string
-
-      # ==================== KernelSU 配置 ====================
       ksu_variant:
         required: true
         type: string
-      ksu_branch:
-        required: true
-        type: string
-
-      # ==================== 可选配置 ====================
       version:
         required: false
         type: string
@@ -40,8 +33,6 @@ on:
         required: false
         type: string
         default: "Sun Dec 01 08:10:00 UTC 2024"
-
-      # ==================== 功能开关 ====================
       use_zram:
         required: true
         type: boolean

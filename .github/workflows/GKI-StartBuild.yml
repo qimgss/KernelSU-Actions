@@ -27,7 +27,6 @@ on:
           #- Next
           - SukiSU-Ultra
           - ReSukiSU
-        default: Official
       kernelsu_branch:
         description: "KSU 分支"
         required: true

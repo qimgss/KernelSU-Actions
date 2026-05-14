@@ -210,7 +210,7 @@ jobs:
           rm -rf AnyKernel3/.git
 
           echo "克隆 SUSFS (分支: $SUSFS_BRANCH)..."
-          if [ "${{ inputs.ksu_variant }}" == "SukiSU" ]; then
+          if [ "${{ inputs.ksu_variant }}" == "SukiSU-Ultra" ]; then
             if ! git clone https://github.com/ShirkNeko/susfs4ksu.git -b "$SUSFS_BRANCH" 2>/dev/null; then
               echo "ShirkNeko 仓库未找到分支 $SUSFS_BRANCH，回退到 simonpunk 原版..."
               git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
@@ -361,16 +361,16 @@ jobs:
               "Stable(标准)")
                 case "$variant_input" in
                   "Next") ;;
-                  "SukiSU") BRANCH="-s builtin" ;;
+                  "SukiSU-Ultra") BRANCH="-s builtin" ;;
                   "KernelSU") BRANCH="-s main" ;;
                   *) BRANCH="-" ;;
                 esac
                 ;;
               "Dev(开发)")
                 case "$variant_input" in
-                  "Official") BRANCH="-s main" ;;
+                  "KernelSU") BRANCH="-s main" ;;
                   "Next") ;;
-                  "SukiSU") BRANCH="-s builtin" ;;
+                  "SukiSU-Ultra") BRANCH="-s builtin" ;;
                   *) echo "未知变体: $variant_input" >&2; exit 1 ;;
                 esac
                 ;;
@@ -381,7 +381,7 @@ jobs:
             esac
 
             # SukiSU 不启用 SUSFS 时强制使用 main 分支
-            if [ "$variant_input" = "SukiSU" ] && [ "${{ inputs.enable_susfs }}" = "false" ]; then
+            if [ "$variant_input" = "SukiSU-Ultra" ] && [ "${{ inputs.enable_susfs }}" = "false" ]; then
               BRANCH="-s main"
             fi
           fi
@@ -390,7 +390,7 @@ jobs:
           CONFIG_FILE="config/config"
           if [ -f "$CONFIG_FILE" ]; then
             CUSTOM_ENABLED=$(grep "^custom=" "$CONFIG_FILE" | cut -d'=' -f2)
-            if [ "$CUSTOM_ENABLED" == "true" ] && [ "$variant_input" == "SukiSU" ]; then
+            if [ "$CUSTOM_ENABLED" == "true" ] && [ "$variant_input" == "SukiSU-Ultra" ]; then
               SUKISU_COMMIT=$(grep "^sukisu=" "$CONFIG_FILE" | cut -d'=' -f2)
               if [ -n "$SUKISU_COMMIT" ]; then
                 BRANCH="-s $SUKISU_COMMIT"
@@ -406,7 +406,7 @@ jobs:
         working-directory: ${{ env.KERNEL_ROOT }}
         run: |
           case "${{ inputs.ksu_variant }}" in
-            "Official")
+            "KernelSU")
               echo "添加 KernelSU 官方版..."
               curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash $BRANCH
 
@@ -424,7 +424,7 @@ jobs:
               echo "添加 KernelSU-Next..."
               curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/refs/heads/dev/kernel/setup.sh" | bash -s dev_susfs
               ;;
-            "SukiSU")
+            "SukiSU-Ultra")
               echo "添加 SukiSU..."
               curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash $BRANCH
               ;;
@@ -515,7 +515,7 @@ jobs:
           cp $SUSFS4KSU/kernel_patches/include/linux/* ./common/include/linux/
 
           case "${{ inputs.ksu_variant }}" in
-            "Official")
+            "KernelSU")
               cd ./KernelSU
               cp $SUSFS4KSU/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
               # 兼容旧版补丁：仅当补丁仍只修改 kernel/Makefile 时，才替换为 kernel/Kbuild
@@ -527,7 +527,7 @@ jobs:
 
               cd ..
               ;;
-            "Next"|"SukiSU"|"ReSukiSU")
+            "Next"|"SukiSU-Ultra"|"ReSukiSU")
               echo "Next/SukiSU/ReSukiSU 使用内置 SUSFS 支持"
               ;;
           esac
@@ -535,7 +535,7 @@ jobs:
           cd $KERNEL_ROOT/common
           patch -p1 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
 
-          if [ "${{ inputs.ksu_variant }}" == "Official" ] || [ "${{ inputs.ksu_variant }}" == "Next" ] || [ "${{ inputs.ksu_variant }}" == "SukiSU" ] || [ "${{ inputs.ksu_variant }}" == "ReSukiSU" ]; then
+          if [ "${{ inputs.ksu_variant }}" == "KernelSU" ] || [ "${{ inputs.ksu_variant }}" == "Next" ] || [ "${{ inputs.ksu_variant }}" == "SukiSU-Ultra" ] || [ "${{ inputs.ksu_variant }}" == "ReSukiSU" ]; then
             CURRENT_SUB="${{ inputs.sub_level }}"
             if [[ ! "$CURRENT_SUB" =~ ^[0-9]+$ ]]; then
               CURRENT_SUB=99999
@@ -851,7 +851,7 @@ jobs:
           CONFIG_TMPFS_POSIX_ACL=y
           EOF
 
-          if [ "${{ inputs.ksu_variant }}" == "SukiSU" ] || [ "${{ inputs.ksu_variant }}" == "ReSukiSU" ] || [ "${{ inputs.ksu_variant }}" == "Next" ]; then
+          if [ "${{ inputs.ksu_variant }}" == "SukiSU-Ultra" ] || [ "${{ inputs.ksu_variant }}" == "ReSukiSU" ] || [ "${{ inputs.ksu_variant }}" == "Next" ]; then
             echo "CONFIG_KPM=y" >> "$DEFCONFIG"
           fi
 

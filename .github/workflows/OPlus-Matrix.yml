@@ -21,7 +21,7 @@ on:
         type: choice
         description: "SUSFS模块下载调用方向"
         required: true
-        default: N/A
+        default: CI
         options:
           - CI
           - Release
@@ -29,8 +29,8 @@ on:
       SUSFS_META:
         type: string
         description: "回退SUSFS(输入哈希或次数或-1关闭)"
-        required: false
-        default: ""
+        required: true
+        default: "-1"
       DYNAMIC_REPO:
         type: string
         description: "动态清单仓库所有者"

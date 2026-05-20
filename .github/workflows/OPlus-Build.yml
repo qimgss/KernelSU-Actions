@@ -221,13 +221,13 @@ jobs:
         run: |
           case "${{ github.event.inputs.BUILD_ANDROID_VERSION }}" in
             FactoryShipment) CONVERT_MANIFEST_VERSION="" ;;
-            Android12) CONVERT_MANIFEST_VERSION="s" ;;
-            Android13) CONVERT_MANIFEST_VERSION="t" ;;
-            Android14) CONVERT_MANIFEST_VERSION="u" ;;
-            Android15) CONVERT_MANIFEST_VERSION="v" ;;
-            Android16) CONVERT_MANIFEST_VERSION="b" ;;
-            Android17) CONVERT_MANIFEST_VERSION="c" ;;
-            AOSP) CONVERT_MANIFEST_VERSION="aosp" ;;
+            Android12) CONVERT_MANIFEST_VERSION="_s" ;;
+            Android13) CONVERT_MANIFEST_VERSION="_t" ;;
+            Android14) CONVERT_MANIFEST_VERSION="_u" ;;
+            Android15) CONVERT_MANIFEST_VERSION="_v" ;;
+            Android16) CONVERT_MANIFEST_VERSION="_b" ;;
+            Android17) CONVERT_MANIFEST_VERSION="_c" ;;
+            AOSP) CONVERT_MANIFEST_VERSION="_aosp" ;;
           esac
           
           echo "${{ github.event.inputs.FILE }}_${CONVERT_MANIFEST_VERSION}"
@@ -236,7 +236,7 @@ jobs:
       - name: 提取清单信息
         id: extract_info
         env:
-          FILE: "${{ github.event.inputs.FILE }}_${{ steps.convert.outputs.MANIFEST_VERSION }}"
+          FILE: "${{ github.event.inputs.FILE }}${{ steps.convert.outputs.MANIFEST_VERSION }}"
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
@@ -502,7 +502,7 @@ jobs:
 
       - name: 初始化Repo并同步
         env:
-          FILE: ${{ github.event.inputs.FILE }}
+          FILE: ${{ github.event.inputs.FILE }}${{ steps.convert.outputs.MANIFEST_VERSION }}
         run: |
           mkdir kernel_workspace && cd kernel_workspace
           mkdir -p .repo/manifests

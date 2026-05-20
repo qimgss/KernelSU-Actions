@@ -230,6 +230,7 @@ jobs:
             AOSP) CONVERT_MANIFEST_VERSION="aosp" ;;
           esac
           
+          echo "${{ github.event.inputs.FILE }}_${CONVERT_MANIFEST_VERSION}"
           echo "MANIFEST_VERSION=$CONVERT_MANIFEST_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: 提取清单信息

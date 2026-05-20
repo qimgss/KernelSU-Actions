@@ -67,10 +67,11 @@ on:
           - oneplus_15t
       BUILD_ANDROID_VERSION:
         type: choice
-        description: "编译内核的Android版本(输入数字)"
+        description: "编译内核的Android版本"
         required: true
         default: "Android16"
         options:
+          - FactoryShipment
           - Android12
           - Android13
           - Android14
@@ -219,6 +220,7 @@ jobs:
         id: convert
         run: |
           case "${{ github.event.inputs.BUILD_ANDROID_VERSION }}" in
+            FactoryShipment) CONVERT_MANIFEST_VERSION="" ;;
             Android12) CONVERT_MANIFEST_VERSION="s" ;;
             Android13) CONVERT_MANIFEST_VERSION="t" ;;
             Android14) CONVERT_MANIFEST_VERSION="u" ;;
